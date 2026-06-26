@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Portal</title>
+    <style>
+        :root {
+            --bg-color: #0d0d11;
+            --card-bg: #16161f;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #22c55e;
+            --accent-hover: #16a34a;
+            --border: #27273a;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        h1 { font-size: 24px; margin-bottom: 10px; font-weight: 700; }
+        p.subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-color);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 2px;
+            outline: none;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus { border-color: #3b82f6; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-submit { background: #3b82f6; color: white; }
+        .btn-submit:hover { background: #2563eb; }
+        
+        .btn-buy { background: var(--accent); color: white; margin-top: 20px; }
+        .btn-buy:hover { background: var(--accent-hover); }
+
+        .btn-back {
+            background: transparent;
+            color: var(--text-muted);
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 300px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .error-msg { color: var(--error); font-size: 14px; margin-top: -10px; margin-bottom: 15px; display: none; }
+        
+        .loader {
+            display: none;
+            border: 4px solid var(--border);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- SEARCH PAGE -->
+        <div id="searchView" class="view active">
+            <h1>Enter Product Code</h1>
+            <p class="subtitle">Check the video description/screen for the code</p>
+            
+            <input type="text" id="codeInputField" placeholder="E.G. TEST1" autocomplete="off">
+            <div id="loadingIcon" class="loader"></div>
+            <div id="errorMessage" class="error-msg">Code not found. Please check and try again!</div>
+            
+            <button class="btn btn-submit" onclick="lookupCode()">Find Product</button>
+        </div>
+
+        <!-- DYNAMIC PRODUCT PAGE -->
+        <div id="productView" class="view">
+            <h1>Product Found</h1>
+            <p class="subtitle" style="margin-bottom: 15px;">Code: <span id="displayCode" style="color: #3b82f6; font-weight: bold;"></span></p>
+            
+            <div class="image-container">
+                <img id="productImage" src="" alt="Product Preview">
+            </div>
+
+            <a id="buyNowLink" href="#" class="btn btn-buy" target="_blank" rel="noopener noreferrer">Buy Now</a>
+            <button class="btn btn-back" onclick="goBack()">← Search Another Code</button>
+        </div>
+
+    </div>
+
+    <script>
+        const SHEET_ID = '1TJlzQN31r3XXHj7iaajC0qpBXSBvkuHqw1bgBZ9IiO8';
+        const SHEET_TITLE = 'Sheet1'; 
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_TITLE}`;
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        async function lookupCode() {
+            const inputField = document.getElementById('codeInputField');
+            const targetCode = inputField.value.trim().toUpperCase();
+            const errorDiv = document.getElementById('errorMessage');
+            const loader = document.getElementById('loadingIcon');
+
+            if (!targetCode) return;
+            
+            errorDiv.style.display = 'none';
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch(CSV_URL);
+                const data = await response.text();
+                
+                const rows = data.split('\n').map(row => 
+                    row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim())
+                );
+
+                let foundProduct = null;
+                for (let i = 1; i < rows.length; i++) {
+                    if (rows[i][0] && rows[i][0].toUpperCase() === targetCode) {
+                        foundProduct = {
+                            code: rows[i][0],
+                            image: rows[i][1],
+                            link: rows[i][2]
+                        };
+                        break;
+                    }
+                }
+
+                loader.style.display = 'none';
+
+                if (foundProduct) {
+                    document.getElementById('displayCode').innerText = foundProduct.code;
+                    document.getElementById('productImage').src = foundProduct.image || "https://via.placeholder.com/300?text=No+Image+Available";
+                    document.getElementById('buyNowLink').href = foundProduct.link;
+                    
+                    showView('productView');
+                } else {
+                    errorDiv.style.display = 'block';
+                }
+
+            } catch (err) {
+                console.error(err);
+                loader.style.display = 'none';
+                alert('Database communication error. Please check your network connection.');
+            }
+        }
+
+        function goBack() {
+            document.getElementById('codeInputField').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            showView('searchView');
+        }
+        
+        document.getElementById('codeInputField').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') lookupCode();
+        });
+    </script>
+</body>
+</html>
