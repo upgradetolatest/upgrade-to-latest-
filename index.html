@@ -96,7 +96,6 @@
             font-weight: 500;
         }
 
-        /* Simplified Product Name Display Box */
         .product-box {
             background: var(--bg-color);
             border: 1px solid var(--border);
@@ -161,7 +160,6 @@
     <script>
         const SHEET_ID = '1TJlzQN31r3XXHj7iaajC0qpBXSBvkuHqw1bgBZ9IiO8';
         const SHEET_TITLE = 'Sheet1'; 
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_TITLE}`;
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -179,8 +177,11 @@
             errorDiv.style.display = 'none';
             loader.style.display = 'block';
 
+            // Fresh URL generation using dynamic timestamps to bypass browser caching completely
+            const freshUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_TITLE}&t=${Date.now()}`;
+
             try {
-                const response = await fetch(CSV_URL);
+                const response = await fetch(freshUrl);
                 const data = await response.text();
                 
                 const rows = data.split('\n').map(row => 
@@ -192,7 +193,7 @@
                     if (rows[i][0] && rows[i][0].toUpperCase() === targetCode) {
                         foundProduct = {
                             code: rows[i][0],
-                            name: rows[i][1], // Column B now acts as the Product Name
+                            name: rows[i][1], 
                             link: rows[i][2]
                         };
                         break;
