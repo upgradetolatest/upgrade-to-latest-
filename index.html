@@ -177,7 +177,7 @@
             errorDiv.style.display = 'none';
             loader.style.display = 'block';
 
-            // Fresh URL generation using dynamic timestamps to bypass browser caching completely
+            // Anti-cache technique: forces fresh Google Sheet data instantly
             const freshUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_TITLE}&t=${Date.now()}`;
 
             try {
@@ -190,13 +190,17 @@
 
                 let foundProduct = null;
                 for (let i = 1; i < rows.length; i++) {
-                    if (rows[i][0] && rows[i][0].toUpperCase() === targetCode) {
-                        foundProduct = {
-                            code: rows[i][0],
-                            name: rows[i][1], 
-                            link: rows[i][2]
-                        };
-                        break;
+                    // Safe cleanup check to make sure text strings match number inputs perfectly
+                    if (rows[i][0]) {
+                        const currentCodeInSheet = rows[i][0].replace(/['"]/g, '').trim().toUpperCase();
+                        if (currentCodeInSheet === targetCode) {
+                            foundProduct = {
+                                code: rows[i][0],
+                                name: rows[i][1], 
+                                link: rows[i][2]
+                            };
+                            break;
+                        }
                     }
                 }
 
