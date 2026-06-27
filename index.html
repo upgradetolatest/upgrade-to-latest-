@@ -85,7 +85,7 @@
         .btn-submit { background: #3b82f6; color: white; }
         .btn-submit:hover { background: #2563eb; }
         
-        .btn-buy { background: var(--accent); color: white; margin-top: 20px; }
+        .btn-buy { background: var(--accent); color: white; margin-top: 25px; }
         .btn-buy:hover { background: var(--accent-hover); }
 
         .btn-back {
@@ -96,23 +96,20 @@
             font-weight: 500;
         }
 
-        .image-container {
-            width: 100%;
-            height: 300px;
+        /* Simplified Product Name Display Box */
+        .product-box {
             background: var(--bg-color);
-            border-radius: 12px;
             border: 1px solid var(--border);
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            padding: 24px 16px;
+            margin: 20px 0;
         }
 
-        .image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .product-title-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.4;
         }
 
         .error-msg { color: var(--error); font-size: 14px; margin-top: -10px; margin-bottom: 15px; display: none; }
@@ -139,20 +136,20 @@
             <h1>Enter Product Code</h1>
             <p class="subtitle">Check the video description/screen for the code</p>
             
-            <input type="text" id="codeInputField" placeholder="E.G. TEST1" autocomplete="off">
+            <input type="text" id="codeInputField" placeholder="E.G. 1001" autocomplete="off">
             <div id="loadingIcon" class="loader"></div>
             <div id="errorMessage" class="error-msg">Code not found. Please check and try again!</div>
             
             <button class="btn btn-submit" onclick="lookupCode()">Find Product</button>
         </div>
 
-        <!-- DYNAMIC PRODUCT PAGE -->
+        <!-- DYNAMIC PRODUCT PAGE (NO IMAGE) -->
         <div id="productView" class="view">
             <h1>Product Found</h1>
             <p class="subtitle" style="margin-bottom: 15px;">Code: <span id="displayCode" style="color: #3b82f6; font-weight: bold;"></span></p>
             
-            <div class="image-container">
-                <img id="productImage" src="" alt="Product Preview">
+            <div class="product-box">
+                <div id="productNameDisplay" class="product-title-text">Loading Product Name...</div>
             </div>
 
             <a id="buyNowLink" href="#" class="btn btn-buy" target="_blank" rel="noopener noreferrer">Buy Now</a>
@@ -195,7 +192,7 @@
                     if (rows[i][0] && rows[i][0].toUpperCase() === targetCode) {
                         foundProduct = {
                             code: rows[i][0],
-                            image: rows[i][1],
+                            name: rows[i][1], // Column B now acts as the Product Name
                             link: rows[i][2]
                         };
                         break;
@@ -206,7 +203,7 @@
 
                 if (foundProduct) {
                     document.getElementById('displayCode').innerText = foundProduct.code;
-                    document.getElementById('productImage').src = foundProduct.image || "https://via.placeholder.com/300?text=No+Image+Available";
+                    document.getElementById('productNameDisplay').innerText = foundProduct.name || "Special Offer Product";
                     document.getElementById('buyNowLink').href = foundProduct.link;
                     
                     showView('productView');
